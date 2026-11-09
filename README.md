@@ -83,7 +83,7 @@ iKuuu 的 Cookie 通常拥有 **7 天有效期**。为了彻底免除在电脑�
 ## ⚙️ 定时执行说明
 
 - **签到时间**：预设每日 UTC 时间 23:10（即北京时间次日 **07:10**）自动触发。
-- 如需更改签到时间，可在 [.github/workflows/sign_ikuuu.yml](.github/workflows/sign_ikuuu.yml) 中的 `cron: '10 23 * * *'` 进行修改。
+- 如需更改签到时间，可在 [.github/workflows/daily_checkin.yml](.github/workflows/daily_checkin.yml) 中的 `cron: '10 23 * * *'` 进行修改（cron 使用 UTC）。
 
 ## 🔧 本 Fork 的每日自动签到
 
@@ -96,7 +96,7 @@ iKuuu 的 Cookie 通常拥有 **7 天有效期**。为了彻底免除在电脑�
 
 ### 首次启用三步
 
-1. 打开仓库的 **Actions** 标签页，点击「I understand my workflows, go ahead and enable them」启用工作流（fork 默认处于禁用状态）。
+1. 打开仓库的 **Actions** 标签页，确认「iKuuu 每日自动签到」处于启用状态（fork 的定时工作流默认禁用，本仓库已通过 API 启用；若显示已禁用，点 **Enable workflow** 即可）。
 2. 进入 **Settings → Secrets and variables → Actions**，新增 `IKUUU_COOKIE`
    （格式 `uid=xxx; email=xxx; key=xxx; expire_in=xxx`，约 7 天有效）。
 3. 回到 Actions → 「iKuuu 每日自动签到」→ **Run workflow** 手动跑一次，确认日志显示签到成功。
