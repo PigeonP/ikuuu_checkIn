@@ -84,3 +84,21 @@ iKuuu 的 Cookie 通常拥有 **7 天有效期**。为了彻底免除在电脑�
 
 - **签到时间**：预设每日 UTC 时间 23:10（即北京时间次日 **07:10**）自动触发。
 - 如需更改签到时间，可在 [.github/workflows/sign_ikuuu.yml](.github/workflows/sign_ikuuu.yml) 中的 `cron: '10 23 * * *'` 进行修改。
+
+## 🔧 本 Fork 的每日自动签到
+
+本仓库在 fork 基础上补充了 `.github/workflows/daily_checkin.yml`，作为唯一的每日签到入口：
+
+- **触发时间**：每日 UTC 23:10，即北京时间次日 **07:10**；也可在 Actions 页面手动 `Run workflow`。
+- **签到模式**：检测到 `IKUUU_COOKIE` 时走 Cookie 免密直签（仅安装 `requests`，秒级完成）；
+  仅有 `ACCOUNTS` 时才安装 Playwright + Chromium 走账号密码登录。
+- **结果输出**：完整签到日志写在 Actions 运行记录的「执行签到」步骤中；配置了推送变量则同时推送到企业微信 / PushPlus。
+
+### 首次启用三步
+
+1. 打开仓库的 **Actions** 标签页，点击「I understand my workflows, go ahead and enable them」启用工作流（fork 默认处于禁用状态）。
+2. 进入 **Settings → Secrets and variables → Actions**，新增 `IKUUU_COOKIE`
+   （格式 `uid=xxx; email=xxx; key=xxx; expire_in=xxx`，约 7 天有效）。
+3. 回到 Actions → 「iKuuu 每日自动签到」→ **Run workflow** 手动跑一次，确认日志显示签到成功。
+
+> 注意：GitHub 在仓库连续 60 天无提交时会自动停用定时工作流，`keepalive.yml` 已负责定期保活。
