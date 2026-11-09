@@ -909,10 +909,19 @@ def handler(event=None, context=None):
         title = "IKUUU 机场签到通知"
         dispatch_notifications(title, push_message)
 
+        # 任一账号未成功即让进程以非零码退出，避免 Actions 显示误导性的绿色成功
+        failed = [r for r in records if not r.get('success')]
+        if failed:
+            print(f"\n[签到结果] 共 {len(records)} 个账号，其中 {len(failed)} 个未成功：")
+            for r in failed:
+                print(f"  - {r.get('safe_email')}: {r.get('status_text')}")
+            sys.exit(1)
+
     except Exception as e:
         err_msg = f"签到任务异常中断：{str(e)}"
         print(err_msg)
         dispatch_notifications("IKUUU 机场签到异常", f"【IKUUU 签到异常】\n{err_msg}")
+        sys.exit(1)
 
     return '任务完成'
 
