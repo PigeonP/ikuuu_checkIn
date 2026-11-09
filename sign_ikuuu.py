@@ -215,6 +215,7 @@ def get_cookie_expire_info(cookie_str):
 # 自动获取与探测最新可用域名
 # ─────────────────────────────────────────────
 LANDING_PAGES = [
+    'https://ikuuu.one',
     'https://ikuuu.club',
     'https://ikuuu.win'
 ]
@@ -222,6 +223,7 @@ LANDING_PAGES = [
 FALLBACK_DOMAINS = [
     'https://ikuuu.top',
     'https://ikuuu.pw',
+    'https://ikuuu.ch',
     'https://ikuuu.org',
     'https://ikuuu.one',
     'https://ikuuu.dev',
@@ -268,9 +270,28 @@ def domain_accepts_cookie(domain, cookie_str):
             return False
         if '/auth/login' in resp.url:
             return False
+        # 排除「最新域名」发布页：它对任何请求都返回 200，会造成鉴权通过的假象
+        if '用户中心' not in resp.text and '节点列表' not in resp.text:
+            return False
         return True
     except Exception:
         return False
+
+
+def extract_domains_by_http(landing_url):
+    """不依赖 Playwright，直接从发布页 HTML 中提取当前可用域名"""
+    found = []
+    try:
+        resp = requests.get(landing_url, headers={'User-Agent': USER_AGENT}, timeout=10)
+        if resp.status_code != 200:
+            return found
+        for m in re.finditer(r'https?://[a-zA-Z0-9.-]*ikuuu[a-zA-Z0-9.-]*\.[a-zA-Z]{2,6}', resp.text):
+            d = m.group(0).rstrip('/')
+            if d not in found:
+                found.append(d)
+    except Exception:
+        pass
+    return found
 
 
 def extract_domains_from_landing_page(landing_url):
@@ -904,8 +925,17 @@ def handler(event=None, context=None):
             # 若首个域名鉴权不通过，逐个尝试其它镜像，避免因域名不匹配误判 Cookie 失效。
             if not domain_accepts_cookie(base_url, cookies_list[0]):
                 print(f"[域名解析] 域名 {base_url} 未通过 Cookie 鉴权，开始尝试其它镜像...")
+                candidates = []
+                for lp in LANDING_PAGES:
+                    for d in extract_domains_by_http(lp):
+                        if d not in candidates:
+                            candidates.append(d)
+                for d in FALLBACK_DOMAINS:
+                    if d not in candidates:
+                        candidates.append(d)
+                print(f"[域名解析] 候选域名: {candidates}")
                 switched = False
-                for cand in FALLBACK_DOMAINS:
+                for cand in candidates:
                     if cand.rstrip('/') == base_url.rstrip('/'):
                         continue
                     if domain_accepts_cookie(cand, cookies_list[0]):
