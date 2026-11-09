@@ -10,7 +10,6 @@ IKUUU 机场多账号自动签到脚本
 6. 结构化精美消息模版通知
 """
 
-from playwright.sync_api import sync_playwright
 import requests
 import os
 import sys
@@ -255,6 +254,8 @@ def extract_domains_from_landing_page(landing_url):
     """使用 Playwright 访问官方发布页，动态解析最新域名列表"""
     domains = []
     try:
+        # 惰性导入：Cookie 免密模式无需 Playwright，云端环境不安装也能运行
+        from playwright.sync_api import sync_playwright
         with sync_playwright() as p:
             browser = p.chromium.launch(
                 headless=True,
@@ -475,6 +476,8 @@ def parse_account_details(rendered_text, html_content=""):
 # Playwright 登录并提取渲染后数据与 Cookie
 # ─────────────────────────────────────────────
 def playwright_login_and_fetch_info(email, passwd, base_url):
+    # 惰性导入：只在账号密码模式才会走到这里
+    from playwright.sync_api import sync_playwright
     safe_email = mask_email(email)
     print(f'\n启动浏览器登录并获取数据：{safe_email}')
 
