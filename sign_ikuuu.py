@@ -250,6 +250,29 @@ def is_valid_login_domain(domain):
     return False
 
 
+def domain_accepts_cookie(domain, cookie_str):
+    """用给定 Cookie 请求该域名的用户中心，判断鉴权是否真的通过"""
+    try:
+        session = requests.Session()
+        for item in cookie_str.split(';'):
+            if '=' in item:
+                k, v = item.split('=', 1)
+                session.cookies.set(k.strip(), v.strip())
+        resp = session.get(
+            f"{domain.rstrip('/')}/user",
+            headers={'User-Agent': USER_AGENT},
+            timeout=10,
+            allow_redirects=True
+        )
+        if resp.status_code != 200:
+            return False
+        if '/auth/login' in resp.url:
+            return False
+        return True
+    except Exception:
+        return False
+
+
 def extract_domains_from_landing_page(landing_url):
     """使用 Playwright 访问官方发布页，动态解析最新域名列表"""
     domains = []
@@ -877,6 +900,21 @@ def handler(event=None, context=None):
 
         records = []
         if cookies_list:
+            # 域名自动探测只验证「页面能否打开」，不代表该域名接受这份 Cookie。
+            # 若首个域名鉴权不通过，逐个尝试其它镜像，避免因域名不匹配误判 Cookie 失效。
+            if not domain_accepts_cookie(base_url, cookies_list[0]):
+                print(f"[域名解析] 域名 {base_url} 未通过 Cookie 鉴权，开始尝试其它镜像...")
+                switched = False
+                for cand in FALLBACK_DOMAINS:
+                    if cand.rstrip('/') == base_url.rstrip('/'):
+                        continue
+                    if domain_accepts_cookie(cand, cookies_list[0]):
+                        print(f"[域名解析] 已切换到 {cand}：该域名下 Cookie 鉴权通过")
+                        base_url = cand
+                        switched = True
+                        break
+                if not switched:
+                    print("[域名解析] 所有镜像均未通过 Cookie 鉴权，Cookie 大概率已失效，请重新获取")
             print(f"\n检测到配置了 {len(cookies_list)} 个 Cookie，启用高可靠免密直签模式（完全无视任何图片验证码）")
             for idx, c in enumerate(cookies_list, 1):
                 print('\n' + '=' * 50)
