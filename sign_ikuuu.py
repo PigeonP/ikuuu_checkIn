@@ -271,7 +271,9 @@ def domain_accepts_cookie(domain, cookie_str):
         if '/auth/login' in resp.url:
             return False
         # 排除「最新域名」发布页：它对任何请求都返回 200，会造成鉴权通过的假象
-        if '用户中心' not in resp.text and '节点列表' not in resp.text:
+        if '最新域名' in resp.text:
+            return False
+        if '登录' in resp.text and '用户中心' not in resp.text and '节点列表' not in resp.text:
             return False
         return True
     except Exception:
