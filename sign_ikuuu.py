@@ -613,6 +613,12 @@ def checkin_with_cookie(cookie_str, base_url):
         record['real_email'] = cookie_email
         record['safe_email'] = mask_email(cookie_email)
 
+    # 诊断输出：只打印字段名，绝不打印字段值
+    print("[Cookie 模式] 解析到字段: " + (", ".join(cookie_dict.keys()) or "（无）"))
+    missing = [k for k in ('uid', 'email', 'key') if k not in cookie_dict]
+    if missing:
+        print("[Cookie 模式] ⚠️ 缺少关键字段: " + ", ".join(missing) + " —— 鉴权必然失败，请重新复制完整 Cookie")
+
     safe_name = record['safe_email']
     print(f"\n[Cookie 模式] 开始验证并签到账号: {safe_name}")
 
